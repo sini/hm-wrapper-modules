@@ -65,6 +65,62 @@
           )
         ];
 
+        # Alacritty with stylix theming.
+        # Stylix auto-themes alacritty (colors, fonts, opacity) when both
+        # are enabled. The adapter extracts the generated alacritty.toml
+        # from xdg.configFile and bundles it into the wrapper.
+        alacritty = mkWrapped "alacritty" [
+          inputs.stylix.homeManagerModules.stylix
+          (
+            { pkgs, ... }:
+            {
+              stylix = {
+                enable = true;
+                base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+                fonts = {
+                  monospace = {
+                    package = pkgs.nerd-fonts.jetbrains-mono;
+                    name = "JetBrainsMono Nerd Font";
+                  };
+                  sansSerif = {
+                    package = pkgs.inter;
+                    name = "Inter";
+                  };
+                  serif = {
+                    package = pkgs.noto-fonts;
+                    name = "Noto Serif";
+                  };
+                  emoji = {
+                    package = pkgs.noto-fonts-emoji;
+                    name = "Noto Color Emoji";
+                  };
+                };
+                # Stylix requires an image even if unused for color generation.
+                # Use a tiny placeholder when deriving colors from base16Scheme.
+                image = pkgs.runCommand "placeholder.png" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
+                  magick -size 1x1 xc:black $out
+                '';
+              };
+
+              programs.alacritty = {
+                enable = true;
+                settings = {
+                  window = {
+                    decorations = "full";
+                    dynamic_title = true;
+                    padding = {
+                      x = 8;
+                      y = 8;
+                    };
+                  };
+                  scrolling.history = 10000;
+                };
+                # Colors, fonts, and opacity are injected by stylix automatically.
+              };
+            }
+          )
+        ];
+
       };
     };
 }

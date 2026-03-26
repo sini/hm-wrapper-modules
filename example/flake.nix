@@ -8,6 +8,9 @@
     hm-wrapper-modules.url = "github:sini/hm-wrapper-modules";
     hm-wrapper-modules.inputs.nixpkgs.follows = "nixpkgs";
     hm-wrapper-modules.inputs.home-manager.follows = "home-manager";
+    stylix.url = "github:nix-community/stylix";
+    stylix.inputs.nixpkgs.follows = "nixpkgs";
+    stylix.inputs.home-manager.follows = "home-manager";
   };
 
   outputs =
