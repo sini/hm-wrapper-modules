@@ -1,7 +1,3 @@
-# Stylix theming as a shared home-manager module.
-#
-# Imported via hmWrappers.baseModules so every wrapped program gets
-# consistent colors, fonts, and cursor theming automatically.
 { inputs, ... }:
 {
   flake.modules.homeManager.stylix =
@@ -32,7 +28,6 @@
           };
         };
 
-        # Stylix requires an image even when deriving colors from base16Scheme.
         image = pkgs.runCommand "placeholder.png" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
           magick -size 1x1 xc:black $out
         '';

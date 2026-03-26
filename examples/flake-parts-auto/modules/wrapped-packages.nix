@@ -1,10 +1,7 @@
 # Auto-wrapped packages via flakeModule.
 #
-# The flakeModule handles all wrapping boilerplate — wrapHomeModule,
-# bwrap, mkBinds, XDG_CONFIG_HOME. Consumers just declare config.
-#
-# NOTE: This module and wrapped-packages.nix are alternative approaches.
-# Use one or the other, not both (they both write to perSystem.packages).
+# The flakeModule auto-discovers wrappable programs from
+# flake.modules.homeManager and handles all wrapping boilerplate.
 { inputs, config, ... }:
 {
   imports = [

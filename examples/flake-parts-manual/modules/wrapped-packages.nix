@@ -1,13 +1,8 @@
 # Manual wrapper registration via flakeModule.
 #
-# Same zero-boilerplate wrapping as auto-wrapped-packages.nix, but
-# programs are listed explicitly via perSystem.hmWrappers.programs.
-# Use this when you want to control exactly which programs are wrapped
-# and how they're composed — including explicit mainPackage from pkgs.
-#
-# NOTE: Use one of wrapped-packages.nix (raw API),
-# auto-wrapped-packages.nix (flakeModule + auto), or this file
-# (flakeModule + manual). They all write to perSystem.packages.
+# Programs are listed explicitly via perSystem.hmWrappers.programs.
+# The flakeModule handles all wrapping boilerplate — wrapHomeModule,
+# bwrap, mkBinds, XDG_CONFIG_HOME.
 { inputs, config, ... }:
 {
   imports = [
@@ -15,12 +10,10 @@
     inputs.flake-parts.flakeModules.modules
   ];
 
-  # Flake-level config: home-manager input and shared settings
   hmWrappers = {
     home-manager = inputs.home-manager;
   };
 
-  # perSystem: programs are declared here so mainPackage can use pkgs
   perSystem =
     { pkgs, ... }:
     {
