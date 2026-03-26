@@ -55,6 +55,15 @@ let
           List of home-manager modules to evaluate for this program.
         '';
       };
+      extraSpecialArgs = mkOption {
+        type = types.attrsOf types.raw;
+        default = { };
+        description = ''
+          Per-program extra specialArgs, merged with the flake-level
+          `hmWrappers.extraSpecialArgs`. Use for identity injection
+          or other program-specific context.
+        '';
+      };
     };
   };
 in
@@ -157,7 +166,7 @@ in
               homeModules = cfg.baseModules ++ programCfg.homeModules;
               home-manager = cfg.home-manager;
               stateVersion = cfg.stateVersion;
-              extraSpecialArgs = cfg.extraSpecialArgs;
+              extraSpecialArgs = cfg.extraSpecialArgs // programCfg.extraSpecialArgs;
             }
             // lib.optionalAttrs (programCfg.mainPackage != null) {
               mainPackage = programCfg.mainPackage;
