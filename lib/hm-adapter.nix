@@ -26,7 +26,7 @@
     - `programName` (optional): Hint for auto-discovery — name of the HM program to extract
       the package from (e.g., `"alacritty"`). Only used when `mainPackage` is null.
     - `extraSpecialArgs` (optional): Extra specialArgs to pass to `homeManagerConfiguration`. Default `{}`.
-    - `stateVersion` (optional): HM state version for the evaluation context. Defaults to `"24.11"`.
+    - `stateVersion` (optional): HM state version for the evaluation context. Defaults to `"26.05"`.
     - `extractPackages` (optional): Extract `home.packages` → `extraPackages`. Default `true`.
     - `extractFiles` (optional): Extract `home.file` / `xdg.configFile` → derivation files. Default `true`.
     - `extractSessionVariables` (optional): Map `home.sessionVariables` → `env` with `mkDefault`. Default `true`.
@@ -71,7 +71,7 @@
       mainPackage ? null,
       programName ? null,
       extraSpecialArgs ? { },
-      stateVersion ? "24.11",
+      stateVersion ? "26.05",
       extractPackages ? true,
       extractFiles ? true,
       extractSessionVariables ? true,
