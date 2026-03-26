@@ -4,7 +4,11 @@
     {
       programs.bat = {
         enable = true;
-        config.theme = "ansi";
+        config = {
+          pager = "less -FR";
+          italic-text = "always";
+          style = "numbers,changes,header";
+        };
       };
     };
 }
