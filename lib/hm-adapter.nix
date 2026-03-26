@@ -194,11 +194,7 @@
 
       # ── Step 3: Extract packages ────────────────────────────────────
 
-      extractedExtraPackages =
-        if !extractPackages then
-          [ ]
-        else
-          hmConfig.home.packages or [ ];
+      extractedExtraPackages = if !extractPackages then [ ] else hmConfig.home.packages or [ ];
 
       # ── Step 4: Extract session variables ───────────────────────────
 
@@ -485,17 +481,13 @@
       out = builtins.placeholder "out";
     in
     lib.listToAttrs (
-      lib.mapAttrsToList (
-        name: _: {
-          name = "${out}/hm-xdg-config/${name}";
-          value = ".config/${name}";
-        }
-      ) hmAdapter.xdgConfigFiles
-      ++ lib.mapAttrsToList (
-        name: fileCfg: {
-          name = "${out}/hm-home/${fileCfg.target or name}";
-          value = fileCfg.target or name;
-        }
-      ) hmAdapter.homeFiles
+      lib.mapAttrsToList (name: _: {
+        name = "${out}/hm-xdg-config/${name}";
+        value = ".config/${name}";
+      }) hmAdapter.xdgConfigFiles
+      ++ lib.mapAttrsToList (name: fileCfg: {
+        name = "${out}/hm-home/${fileCfg.target or name}";
+        value = fileCfg.target or name;
+      }) hmAdapter.homeFiles
     );
 }

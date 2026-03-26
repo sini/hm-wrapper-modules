@@ -1,0 +1,40 @@
+{
+  "planPath": "docs/superpowers/plans/2026-03-26-flake-parts-module.md",
+  "tasks": [
+    {
+      "id": 7,
+      "subject": "Task 0: Create parts.nix flake-parts module",
+      "status": "pending",
+      "description": "Create parts.nix with hmWrappers options + perSystem wrapping. Export as flakeModules.default.",
+      "metadata": {
+        "files": ["parts.nix", "flake.nix"],
+        "verifyCommand": "nix flake check",
+        "acceptanceCriteria": ["hmWrappers options", "auto-discovery", "perSystem packages", "flakeModules.default"]
+      }
+    },
+    {
+      "id": 8,
+      "subject": "Task 1: Add flake-parts module tests",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "Test manual wrapping pattern and auto-discovery isWrappable logic.",
+      "metadata": {
+        "files": ["checks/flake-parts-manual.nix", "checks/flake-parts-auto.nix"],
+        "verifyCommand": "nix flake check",
+        "acceptanceCriteria": ["manual test passes", "auto-discovery test passes"]
+      }
+    },
+    {
+      "id": 9,
+      "subject": "Task 2: Update example and README",
+      "status": "pending",
+      "blockedBy": [7, 8],
+      "description": "Rewrite auto-wrapped-packages.nix to use flakeModule. Update README with both patterns.",
+      "metadata": {
+        "files": ["example/modules/auto-wrapped-packages.nix", "example/README.md"],
+        "acceptanceCriteria": ["auto-wrapped uses flakeModule", "README covers both patterns"]
+      }
+    }
+  ],
+  "lastUpdated": "2026-03-26T00:00:00Z"
+}

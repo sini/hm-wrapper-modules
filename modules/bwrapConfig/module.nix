@@ -16,12 +16,10 @@ let
   # readlink -f runs fresh on each launch, so HM updates are picked up.
   resolveDest = target: "$(readlink -f \"$HOME\"/${lib.escapeShellArg target})";
 
-  mkRoBind =
-    src: "--ro-bind ${lib.escapeShellArg src} ${resolveDest cfg.binds.ro.${src}}";
+  mkRoBind = src: "--ro-bind ${lib.escapeShellArg src} ${resolveDest cfg.binds.ro.${src}}";
   roBindArgs = lib.concatMapStringsSep " \\\n  " mkRoBind (lib.attrNames cfg.binds.ro);
 
-  mkRwBind =
-    src: "--bind ${lib.escapeShellArg src} ${resolveDest cfg.binds.rw.${src}}";
+  mkRwBind = src: "--bind ${lib.escapeShellArg src} ${resolveDest cfg.binds.rw.${src}}";
   rwBindArgs = lib.concatMapStringsSep " \\\n  " mkRwBind (lib.attrNames cfg.binds.rw);
 
   passthroughArgs = lib.optionalString cfg.passthrough.dev "--dev-bind / /";

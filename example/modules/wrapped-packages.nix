@@ -1,125 +1,98 @@
-# Wrap home-manager programs as standalone `nix run`-able packages.
+# Wrap home-manager programs as standalone packages.
 #
-# Each entry evaluates an HM module, extracts its config, and produces
-# a wrapped derivation. On Linux, bubblewrap presents the bundled config
-# at the expected filesystem paths without modifying $HOME.
-{ inputs, ... }:
+# Each entry evaluates HM modules via wrapHomeModule, extracts config,
+# and produces a wrapped derivation with bwrap on Linux.
+{ inputs, config, ... }:
 {
+  imports = [ inputs.flake-parts.flakeModules.modules ];
+
   perSystem =
-    { pkgs, ... }:
+    { pkgs, lib, ... }:
     let
       wlib = inputs.hm-wrapper-modules.lib;
-
-      # Helper: wrap an HM module with bwrap on Linux, XDG fallback on darwin.
-      mkWrapped =
-        name: homeModules:
-        let
-          base = wlib.wrapHomeModule {
-            inherit pkgs homeModules;
-            programName = name;
-            home-manager = inputs.home-manager;
-          };
-        in
-        base.wrap (
-          { config, lib, ... }:
-          {
-            imports = [ wlib.modules.bwrapConfig ];
-            bwrapConfig.binds.ro = wlib.mkBinds base.passthru.hmAdapter;
-            # Null out XDG_CONFIG_HOME when bwrap is active — bwrap presents
-            # files at their real paths, so the env override is unnecessary.
-            # On darwin, bwrap is a no-op and the adapter's mkDefault
-            # XDG_CONFIG_HOME is the only way programs find their config.
-            env.XDG_CONFIG_HOME = lib.mkIf config.bwrapConfig.enable (lib.mkForce null);
-          }
-        );
     in
     {
       packages = {
 
-        # Tier 1: no context needed — static program config
-        bat = mkWrapped "bat" [
-          (
-            { ... }:
+        # ── bat: auto-discovered mainPackage ──────────────────────────
+        # programName = "bat" tells the adapter to find
+        # programs.bat.package from the evaluated HM config.
+        bat =
+          let
+            base = wlib.wrapHomeModule {
+              inherit pkgs;
+              programName = "bat";
+              homeModules = [
+                config.flake.modules.homeManager.bat
+              ];
+              home-manager = inputs.home-manager;
+            };
+          in
+          base.wrap (
+            { config, lib, ... }:
             {
-              programs.bat = {
-                enable = true;
-                config.theme = "ansi";
-              };
+              imports = [ wlib.modules.bwrapConfig ];
+              bwrapConfig.binds.ro = wlib.mkBinds base.passthru.hmAdapter;
+              # The adapter sets XDG_CONFIG_HOME to a store path as a
+              # fallback for platforms without bwrap (e.g., macOS).
+              # When bwrap is active, config files are bind-mounted to
+              # their real paths, so the env override is redundant —
+              # null it out to avoid confusing programs that inspect
+              # XDG_CONFIG_HOME for other purposes.
+              env.XDG_CONFIG_HOME = lib.mkIf config.bwrapConfig.enable (lib.mkForce null);
             }
-          )
-        ];
+          );
 
-        starship = mkWrapped "starship" [
-          (
-            { ... }:
+        # ── starship: explicit mainPackage ────────────────────────────
+        # Pass the package directly instead of auto-discovery.
+        # Useful when pname doesn't match the program name, or when
+        # the package comes from a custom overlay or flake input.
+        starship =
+          let
+            base = wlib.wrapHomeModule {
+              inherit pkgs;
+              mainPackage = pkgs.starship;
+              homeModules = [
+                config.flake.modules.homeManager.starship
+              ];
+              home-manager = inputs.home-manager;
+            };
+          in
+          base.wrap (
+            { config, lib, ... }:
             {
-              programs.starship = {
-                enable = true;
-                settings = {
-                  add_newline = false;
-                  character.success_symbol = "[>](bold green)";
-                  character.error_symbol = "[x](bold red)";
-                };
-              };
+              imports = [ wlib.modules.bwrapConfig ];
+              bwrapConfig.binds.ro = wlib.mkBinds base.passthru.hmAdapter;
+              env.XDG_CONFIG_HOME = lib.mkIf config.bwrapConfig.enable (lib.mkForce null);
             }
-          )
-        ];
+          );
 
-        # Alacritty with stylix theming.
-        # Stylix auto-themes alacritty (colors, fonts, opacity) when both
-        # are enabled. The adapter extracts the generated alacritty.toml
-        # from xdg.configFile and bundles it into the wrapper.
-        alacritty = mkWrapped "alacritty" [
-          inputs.stylix.homeManagerModules.stylix
-          (
-            { pkgs, ... }:
+        # ── alacritty: composed with external HM modules ─────────────
+        # homeModules is a list — compose any number of HM modules
+        # from flake.modules.homeManager, external flake inputs, or
+        # inline definitions. Here stylix theming (from stylix.nix)
+        # auto-injects catppuccin-mocha colors, JetBrainsMono font,
+        # and opacity into the generated alacritty.toml.
+        alacritty =
+          let
+            base = wlib.wrapHomeModule {
+              inherit pkgs;
+              programName = "alacritty";
+              homeModules = [
+                config.flake.modules.homeManager.stylix
+                config.flake.modules.homeManager.alacritty
+              ];
+              home-manager = inputs.home-manager;
+            };
+          in
+          base.wrap (
+            { config, lib, ... }:
             {
-              stylix = {
-                enable = true;
-                base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-                fonts = {
-                  monospace = {
-                    package = pkgs.nerd-fonts.jetbrains-mono;
-                    name = "JetBrainsMono Nerd Font";
-                  };
-                  sansSerif = {
-                    package = pkgs.inter;
-                    name = "Inter";
-                  };
-                  serif = {
-                    package = pkgs.noto-fonts;
-                    name = "Noto Serif";
-                  };
-                  emoji = {
-                    package = pkgs.noto-fonts-emoji;
-                    name = "Noto Color Emoji";
-                  };
-                };
-                # Stylix requires an image even if unused for color generation.
-                # Use a tiny placeholder when deriving colors from base16Scheme.
-                image = pkgs.runCommand "placeholder.png" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
-                  magick -size 1x1 xc:black $out
-                '';
-              };
-
-              programs.alacritty = {
-                enable = true;
-                settings = {
-                  window = {
-                    decorations = "full";
-                    dynamic_title = true;
-                    padding = {
-                      x = 8;
-                      y = 8;
-                    };
-                  };
-                  scrolling.history = 10000;
-                };
-                # Colors, fonts, and opacity are injected by stylix automatically.
-              };
+              imports = [ wlib.modules.bwrapConfig ];
+              bwrapConfig.binds.ro = wlib.mkBinds base.passthru.hmAdapter;
+              env.XDG_CONFIG_HOME = lib.mkIf config.bwrapConfig.enable (lib.mkForce null);
             }
-          )
-        ];
+          );
 
       };
     };

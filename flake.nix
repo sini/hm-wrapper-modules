@@ -22,16 +22,20 @@
       forAllSystems = lib.genAttrs lib.platforms.all;
 
       hmAdapter = import ./lib/hm-adapter.nix { inherit lib wlib; };
-    in
-    {
+
       # Extend upstream wlib with our adapter functions and bwrapConfig module.
       # Consumers get the full nix-wrapper-modules API plus HM adapter in one import.
-      lib = wlib // {
+      extendedWlib = wlib // {
         inherit (hmAdapter) wrapHomeModule mkBinds;
         modules = wlib.modules // {
           bwrapConfig = ./modules/bwrapConfig/module.nix;
         };
       };
+    in
+    {
+      lib = extendedWlib;
+
+      flakeModules.default = import ./parts.nix { wlib = extendedWlib; };
 
       modules = {
         bwrapConfig = ./modules/bwrapConfig/module.nix;
@@ -51,9 +55,11 @@
             let
               fn = import (./checks + "/${name}");
               fargs = builtins.functionArgs fn;
-              args =
-                { inherit pkgs; self = self; }
-                // lib.optionalAttrs (fargs ? home-manager) { inherit home-manager; };
+              args = {
+                inherit pkgs;
+                self = self;
+              }
+              // lib.optionalAttrs (fargs ? home-manager) { inherit home-manager; };
             in
             {
               name = lib.removeSuffix ".nix" name;
@@ -61,15 +67,10 @@
             };
         in
         builtins.listToAttrs (
-          map importCheck (
-            builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames checkFiles)
-          )
+          map importCheck (builtins.filter (name: lib.hasSuffix ".nix" name) (builtins.attrNames checkFiles))
         )
       );
 
-      formatter = forAllSystems (
-        system:
-        nixpkgs.legacyPackages.${system}.nixfmt-rfc-style
-      );
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
     };
 }
